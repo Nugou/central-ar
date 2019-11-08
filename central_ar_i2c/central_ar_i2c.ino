@@ -3,14 +3,6 @@
 #include <ArduinoJson.h>
 #include <Adafruit_CCS811.h>
 
-extern "C" {
-  #include "gpio.h"
-}
-
-extern "C" {
-  #include "user_interface.h"
-}
-
 Adafruit_CCS811 ccs;
 //ESP.deepSleep(1 * 60000000);//Dorme por 1 Minuto (Deep-Sleep em Micro segundos).
 const char* ssid_production = "evento";
@@ -81,6 +73,7 @@ void setup() {
 	base_url = (testLocal ? localAddress + base_url : remoteAddress + base_url);
 	iot_url_send = base_url + iot_url_send;
 	iot_url_token = base_url + iot_url_token;
+
 	if(ledsEnabled){
 		pinMode(pinLeds[0],OUTPUT);//ligado
 		pinMode(pinLeds[1],OUTPUT);//Transferencia
@@ -95,8 +88,9 @@ void setup() {
 	}	
 
 	WiFi.mode(WIFI_STA);
+
 	if(!ledsEnabled) Serial.println(WiFi.macAddress().c_str());
-	do{	
+	while(!ccs.begin()){	
 		if(!sensorEnabled) break;
 		if(ledsEnabled){ 
 			ledShowAlter(10, 350);
@@ -104,21 +98,29 @@ void setup() {
 			Serial.println("Acessando sensor");
 			delay(1000);
 		}
-	}while(!ccs.begin());	
+	}	
+	//CCS811_DRIVE_MODE_1SEC
+	ccs.setDriveMode(CCS811_DRIVE_MODE_250MS);
 
 	int cont = 0;
 	do{
-		if(ccs.available()){
+		if(ccs.available() && !ccs.readData() && ccs.geteCO2() > 0) {
 			filterPush(ccs.geteCO2());
 			cont++;
 		}
+		ledShow(1, 4, 80);
 	}while(cont < filterSize-1);
 }
 
 void modeSleep(int time) {
+	digitalWrite(pinLeds[0], LOW);
+	digitalWrite(pinLeds[1], LOW);
+	ccs.setDriveMode(CCS811_DRIVE_MODE_IDLE);
 	WiFi.forceSleepBegin(0);
 	delay(time);
 	WiFi.forceSleepWake();
+	ccs.setDriveMode(CCS811_DRIVE_MODE_250MS);
+	digitalWrite(pinLeds[0], HIGH);
 }
 
 void getSettings() {
@@ -162,6 +164,7 @@ void httpRequest(String url, char JSONmessageBuffer[300], String method){
 
 	int httpCode = 0;
 	if(method == "post"){
+		http.addHeader("authentication", "Bearer " + token);
 		httpCode = http.POST(JSONmessageBuffer); 	
 	} else if(method == "get"){
 		httpCode = http.GET(); 	
@@ -262,7 +265,7 @@ void loop() {
 			DynamicJsonDocument JSONencoder(500);	
 			char JSONmessageBuffer[500] = "";
 
-			JSONencoder["token"] = "Bearer " + token;
+			//JSONencoder["token"] = "Bearer " + token;
 			JsonArray nested = JSONencoder.createNestedArray("sensorData");
 			JsonObject after[1] = nested.createNestedObject();
 			after[0]["type"] = "co2";
@@ -288,6 +291,8 @@ void loop() {
 			}
 		}
 	}
-	Serial.println(ESP.getVcc());
+
+	if(!ledsEnabled) Serial.println(ESP.getVcc());
+
 	modeSleep(sendTime);
 }
