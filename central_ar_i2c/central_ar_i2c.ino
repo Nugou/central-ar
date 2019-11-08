@@ -27,6 +27,7 @@ const bool network = true;
 const bool testLocal = true;
 
 const int pinLeds[] = {1,3};
+const String fingerprint = "08:3B:71:72:02:43:6E:CA:ED:42:86:93:BA:7E:DF:81:C4:BC:62:30";
 String remoteAddress = "https://iot-central.herokuapp.com/";
 String localAddress = "http://192.168.0.4:3001/";
 
@@ -38,6 +39,9 @@ String token = "";
 String statusMode = "";
 int sendTime = 5; //Segundos
 int timeSleep = 60; //Minutos
+
+const int filterSize = 10;
+int filter[filterSize];
 
 void ledShow(int id, int size, int speed){
 	digitalWrite(pinLeds[id], HIGH);
@@ -101,6 +105,14 @@ void setup() {
 			delay(1000);
 		}
 	}while(!ccs.begin());	
+
+	int cont = 0;
+	do{
+		if(ccs.available()){
+			filterPush(ccs.geteCO2());
+			cont++;
+		}
+	}while(cont < filterSize-1);
 }
 
 void modeSleep(int time) {
@@ -125,11 +137,26 @@ void getSettings() {
 	}while(statusMode != "ok");		
 }
 
+void filterPush(int value) {
+	for(int i = 0; i < filterSize; i++) {
+		filter[i] = filter[i+1];
+	}
+	filter[filterSize-1] = value;
+}
+
+int getFilter() {
+	int max = 0;
+	for(int i = 0; i < filterSize; i++) {
+		max += filter[i];
+	}
+
+	return max / filterSize;
+}
 
 void httpRequest(String url, char JSONmessageBuffer[300], String method){
 	HTTPClient http;
 
-	testLocal ? http.begin(url) : http.begin(url, "08:3B:71:72:02:43:6E:CA:ED:42:86:93:BA:7E:DF:81:C4:BC:62:30");
+	testLocal ? http.begin(url) : http.begin(url, fingerprint);
 	
 	http.addHeader("Content-Type", "application/json");
 
@@ -216,10 +243,6 @@ void checkNet(){
 	}	
 }
 
-void filter(){
-
-}
-
 void loop() {
 	
 	if(network){
@@ -233,6 +256,8 @@ void loop() {
 	if(sensorEnabled){
 		if(ccs.available() && !ccs.readData()){
 			
+			filterPush(ccs.geteCO2());
+
 			const size_t capacity = JSON_ARRAY_SIZE(1) + 2*JSON_OBJECT_SIZE(2);
 			DynamicJsonDocument JSONencoder(500);	
 			char JSONmessageBuffer[500] = "";
@@ -241,7 +266,7 @@ void loop() {
 			JsonArray nested = JSONencoder.createNestedArray("sensorData");
 			JsonObject after[1] = nested.createNestedObject();
 			after[0]["type"] = "co2";
-			after[0]["value"] = ccs.geteCO2();
+			after[0]["value"] = getFilter();
 			//after[1]["type"] = "acy";
 			//after[1]["value"] = AcY;
 		
