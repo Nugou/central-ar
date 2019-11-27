@@ -17,6 +17,7 @@ const bool sensorEnabled = true;
 const bool sendJson = true;
 const bool network = true;
 const bool testLocal = false;
+const bool sleep = true;
 
 const int pinLeds[] = {1,3};
 const String fingerprint = "08:3B:71:72:02:43:6E:CA:ED:42:86:93:BA:7E:DF:81:C4:BC:62:30";
@@ -29,7 +30,7 @@ String iot_url_send =  "sensors";
 
 String token = "";
 String statusMode = "";
-int sendTime = 5000; //Segundos
+int sendTime = 60000; //Segundos
 int timeSleep = 60; //Minutos
 
 const int filterSize = 10;
@@ -179,22 +180,26 @@ void httpRequest(String url,String method, char JSONmessageBuffer[] = ""){
 }
 
 void modeSleep(int time) {
-	
-	if(ledsEnabled){
-		digitalWrite(pinLeds[0], LOW);
-		digitalWrite(pinLeds[1], LOW);
+
+	if(sleep){
+		if(ledsEnabled){
+			digitalWrite(pinLeds[0], LOW);
+			digitalWrite(pinLeds[1], LOW);
+		} else {
+			Serial.println("Mode Sleep: Actived");
+		}
+		ccs.setDriveMode(CCS811_DRIVE_MODE_IDLE);
+		WiFi.forceSleepBegin(0);
+		delay(time);
+		WiFi.forceSleepWake();
+		ccs.setDriveMode(CCS811_DRIVE_MODE_250MS);
+		if(ledsEnabled) {
+			digitalWrite(pinLeds[0], HIGH);
+		} else {
+			Serial.println("Mode Sleep: Desactived");
+		}	
 	} else {
-		Serial.println("Mode Sleep: Actived");
-	}
-	ccs.setDriveMode(CCS811_DRIVE_MODE_IDLE);
-	WiFi.forceSleepBegin(0);
-	delay(time);
-	WiFi.forceSleepWake();
-	ccs.setDriveMode(CCS811_DRIVE_MODE_250MS);
-	if(ledsEnabled) {
-		digitalWrite(pinLeds[0], HIGH);
-	} else {
-		Serial.println("Mode Sleep: Desactived");
+		delay(time);
 	}
 }
 
