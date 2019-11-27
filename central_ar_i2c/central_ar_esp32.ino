@@ -34,7 +34,7 @@ String iot_url_send =  "sensors";
 
 String token = "";
 String statusMode = "";
-int sendTime = 60000; //Segundos
+int sendTime = 6; //Segundos
 int timeSleep = 60; //Minutos
 
 const int filterSize = 10;
@@ -85,10 +85,10 @@ void setup() {
 	digitalWrite(pinLeds[0], HIGH);
 	digitalWrite(pinLeds[1], HIGH);
 	Serial.begin(115200);	
+	delay(2000);
 	Serial.println("\n\niniciando");
 	Serial.println(base_url);
 	Serial.println(WiFi.macAddress().c_str()
-	delay(2000);
 
 	WiFi.mode(WIFI_STA);
 
@@ -185,8 +185,8 @@ void httpRequest(String url,String method, char JSONmessageBuffer[] = ""){
 			
 			statusMode = doc["statusMode"].as<String>(); 
 			token = doc["token"].as<String>(); 
-			sendTime = doc["sendTime"].as<int>() * 1000;
-			timeSleep = doc["timeSleep"].as<int>() * 60000 + (2 * sendTime);
+			sendTime = doc["sendTime"].as<int>();
+			timeSleep = doc["timeSleep"].as<int>() * 60 + (2 * sendTime);
 
 			Serial.println(statusMode);
 			Serial.println(sendTime);
