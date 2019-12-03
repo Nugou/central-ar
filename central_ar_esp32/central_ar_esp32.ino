@@ -6,6 +6,7 @@
 #define uS_TO_S_FACTOR 1000000
 
 Adafruit_CCS811 ccs;
+//SDA D21 - SCL D22
 const char* ssid_production = "evento";
 const char* psw_production = "cesupaargo";
 const char* ssid_development = "Roberval Malino";
@@ -13,16 +14,16 @@ const char* psw_development = "rm81589636";
 
 const char* version = "v1";
 
-const bool sensorEnabled = true;
-const bool sendJson = true;
-const bool network = true;
+const bool sensorEnabled = false;
+const bool sendJson = false;
+const bool network = false;
 const bool testLocal = false;
 const bool sleepEnabled = true;
 const bool filterEnabled = false;
 
 const int attempts_request = 3;
-const int pinLeds[] = {32,33};
-const String fingerprint = "08:3B:71:72:02:43:6E:CA:ED:42:86:93:BA:7E:DF:81:C4:BC:62:30";
+const int pinLeds[] = {2,4};
+const char* fingerprint = "08:3B:71:72:02:43:6E:CA:ED:42:86:93:BA:7E:DF:81:C4:BC:62:30";
 String remoteAddress = "https://iot-central.herokuapp.com/";
 String localAddress = "http://192.168.0.4:3001/";
 
