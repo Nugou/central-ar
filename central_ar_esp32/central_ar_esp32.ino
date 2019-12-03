@@ -5,10 +5,7 @@
 
 #define uS_TO_S_FACTOR 1000000
 
-extern "C" int rom_phy_get_vdd33();
-
 Adafruit_CCS811 ccs;
-//ESP.deepSleep(1 * 60000000);//Dorme por 1 Minuto (Deep-Sleep em Micro segundos).
 const char* ssid_production = "evento";
 const char* psw_production = "cesupaargo";
 const char* ssid_development = "Roberval Malino";
@@ -20,7 +17,8 @@ const bool sensorEnabled = true;
 const bool sendJson = true;
 const bool network = true;
 const bool testLocal = false;
-const bool sleep = true;
+const bool sleepEnabled = true;
+const bool filterEnabled = false;
 
 const int attempts_request = 3;
 const int pinLeds[] = {32,33};
@@ -73,6 +71,56 @@ void ledShowAlter(int size, int speed){
 	digitalWrite(pinLeds[1], LOW);
 }
 
+void httpRequest(String url,String method, char JSONmessageBuffer[] = ""){
+  HTTPClient http;
+
+  testLocal ? http.begin(url) : http.begin(url, fingerprint);
+  
+  http.addHeader("Content-Type", "application/json");
+
+  for(int i = 0; i < attempts_request; i++){
+
+    checkNet();
+
+    int httpCode = 0;
+
+    if(method == "post"){
+      http.addHeader("authentication", "Bearer " + token);
+      httpCode = http.POST(JSONmessageBuffer);  
+    } else if(method == "get"){
+      httpCode = http.GET();  
+    }
+
+    Serial.println(url);
+    
+    if(httpCode == 200){ //Tudo enviado
+      const size_t capacity = JSON_OBJECT_SIZE(4) + 250;
+      StaticJsonDocument<capacity> doc;
+        
+      deserializeJson(doc, http.getString());
+      
+      statusMode = doc["statusMode"].as<String>(); 
+      token = doc["token"].as<String>(); 
+      sendTime = doc["sendTime"].as<int>();
+      timeSleep = doc["timeSleep"].as<int>() * 60 + (2 * sendTime);
+
+      Serial.println(statusMode);
+      Serial.println(sendTime);
+      Serial.println(timeSleep);
+      ledShow(1, 10, 150);  
+      break;
+    } else {
+      statusMode = "";
+      Serial.println(httpCode); 
+      Serial.println(http.errorToString(httpCode).c_str());
+      ledShow(1, 6, 350);
+    }
+  }
+
+  
+  http.end(); 
+}
+
 void setup() {
 
 	base_url = (testLocal ? localAddress + base_url : remoteAddress + base_url);
@@ -88,7 +136,7 @@ void setup() {
 	delay(2000);
 	Serial.println("\n\niniciando");
 	Serial.println(base_url);
-	Serial.println(WiFi.macAddress().c_str()
+	Serial.println(WiFi.macAddress().c_str());
 
 	WiFi.mode(WIFI_STA);
 
@@ -155,59 +203,9 @@ void setup() {
 	modeSleep(sendTime);
 }
 
-void httpRequest(String url,String method, char JSONmessageBuffer[] = ""){
-	HTTPClient http;
-
-	testLocal ? http.begin(url) : http.begin(url, fingerprint);
-	
-	http.addHeader("Content-Type", "application/json");
-
-	for(int i = 0; i < attempts_request; i++){
-
-		checkNet();
-
-		int httpCode = 0;
-
-		if(method == "post"){
-			http.addHeader("authentication", "Bearer " + token);
-			httpCode = http.POST(JSONmessageBuffer); 	
-		} else if(method == "get"){
-			httpCode = http.GET(); 	
-		}
-
-		Serial.println(url);
-		
-		if(httpCode == 200){ //Tudo enviado
-			const size_t capacity = JSON_OBJECT_SIZE(4) + 250;
-			StaticJsonDocument<capacity> doc;
-				
-			deserializeJson(doc, http.getString());
-			
-			statusMode = doc["statusMode"].as<String>(); 
-			token = doc["token"].as<String>(); 
-			sendTime = doc["sendTime"].as<int>();
-			timeSleep = doc["timeSleep"].as<int>() * 60 + (2 * sendTime);
-
-			Serial.println(statusMode);
-			Serial.println(sendTime);
-			Serial.println(timeSleep);
-			ledShow(1, 10, 150);	
-			break;
-		} else {
-			statusMode = "";
-			Serial.println(httpCode); 
-			Serial.println(http.errorToString(httpCode).c_str());
-			ledShow(1, 6, 350);
-		}
-	}
-
-	
-	http.end(); 
-}
-
 void modeSleep(int time) {
 
-	if(sleep){
+	if(sleepEnabled){
 		digitalWrite(pinLeds[0], LOW);
 		digitalWrite(pinLeds[1], LOW);
 		Serial.flush(); 
@@ -239,7 +237,7 @@ int getFilter() {
 	for(int i = 0; i < filterSize; i++) {
 		max += filter[i];
 	}
-
+	if(filterEnabled) return filter[filterSize-1];
 	return max / filterSize;
 }
 
