@@ -4,11 +4,13 @@
 #include <Adafruit_CCS811.h>
 
 Adafruit_CCS811 ccs;
-//ESP.deepSleep(1 * 60000000);//Dorme por 1 Minuto (Deep-Sleep em Micro segundos).
-const char* ssid_production = "evento";
-const char* psw_production = "cesupaargo";
-const char* ssid_development = "Roberval Malino";
-const char* psw_development = "rm81589636";
+//Rede de produção
+const char* ssid_production = "";
+const char* psw_production = "";
+
+//Rede de teste
+const char* ssid_development = "";
+const char* psw_development = "";
 
 const char* version = "v1";
 

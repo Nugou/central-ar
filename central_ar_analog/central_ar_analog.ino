@@ -1,3 +1,10 @@
+/*
+			ATENÇÂO: ESSE CODIGO ESTA DEPRECIADO
+
+*/
+
+
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
@@ -6,8 +13,9 @@
 
 const bool dev = false;
 
-const char* ssid = "Temp";
-const char* psw = "abc12345";
+//rede de produção
+const char* ssid = "";
+const char* psw = "";
 
 const bool sendJson = true;
 const int pinLeds[] = {32,33};

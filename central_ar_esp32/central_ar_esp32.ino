@@ -6,11 +6,13 @@
 #define uS_TO_S_FACTOR 1000000
 
 Adafruit_CCS811 ccs;
-//SDA D21 - SCL D22
-const char* ssid_production = "evento";
-const char* psw_production = "cesupaargo";
-const char* ssid_development = "Roberval Malino";
-const char* psw_development = "rm81589636";
+//Rede de produção
+const char* ssid_production = ""; 
+
+//Rede de teste
+const char* psw_production = "";
+const char* ssid_development = "";
+const char* psw_development = "";
 
 const char* version = "v1";
 
