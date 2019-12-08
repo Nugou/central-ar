@@ -14,12 +14,12 @@ const char* psw_development = "rm81589636";
 
 const char* version = "v1";
 
-const bool sensorEnabled = false;
-const bool sendJson = false;
-const bool network = false;
+const bool sensorEnabled = true;
+const bool sendJson = true;
+const bool network = true;
 const bool testLocal = false;
 const bool sleepEnabled = true;
-const bool filterEnabled = false;
+const bool filterEnabled = true;
 
 const int attempts_request = 3;
 const int pinLeds[] = {2,4};
