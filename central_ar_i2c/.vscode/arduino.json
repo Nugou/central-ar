@@ -1,6 +1,0 @@
-{
-    "board": "esp32:esp32:esp32",
-    "configuration": "PSRAM=disabled,PartitionScheme=default,CPUFreq=240,FlashMode=qio,FlashFreq=40,FlashSize=4M,UploadSpeed=921600,DebugLevel=none",
-    "sketch": "central_ar_i2c.ino",
-    "port": "COM6"
-}
